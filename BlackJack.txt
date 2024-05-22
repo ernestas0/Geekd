@@ -1,0 +1,157 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <random>
+#include <ctime>
+#include <chrono>
+
+using namespace std;
+
+enum Rank {
+    TWO = 2, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN,
+    JACK, QUEEN, KING, ACE
+};
+
+enum Suit {
+    CLUBS, DIAMONDS, HEARTS, SPADES
+};
+
+struct Card {
+    Rank rank;
+    Suit suit;
+};
+
+vector<Card> createDeck() {
+    vector<Card> deck;
+    for (int s = CLUBS; s <= SPADES; ++s) {
+        for (int r = TWO; r <= ACE; ++r) {
+            deck.push_back(Card{static_cast<Rank>(r), static_cast<Suit>(s)});
+        }
+    }
+    return deck;
+}
+
+void shuffleDeck(vector<Card>& deck) {
+    unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+    shuffle(deck.begin(), deck.end(), default_random_engine(seed));
+}
+
+int cardValue(const Card& card) {
+    if (card.rank >= TWO && card.rank <= TEN) {
+        return card.rank;
+    } else if (card.rank >= JACK && card.rank <= KING) {
+        return 10;
+    } else { // ACE
+        return 11;
+    }
+}
+
+int calculateHandValue(const vector<Card>& hand) {
+    int value = 0;
+    int aces = 0;
+    for (const Card& card : hand) {
+        value += cardValue(card);
+        if (card.rank == ACE) {
+            ++aces;
+        }
+    }
+    while (value > 21 && aces > 0) {
+        value -= 10;
+        --aces;
+    }
+    return value;
+}
+
+void printCard(const Card& card) {
+    const string ranks[] = {"2", "3", "4", "5", "6", "7", "8", "9", "10", "JACK", "QUEEN", "KING", "ACE"};
+    const string suits[] = {" Clubs", " Diamonds", " Hearts", " Spades"};
+    cout << ranks[card.rank - 2] << suits[card.suit] << " ";
+}
+
+void printHand(const vector<Card>& hand) {
+    for (const Card& card : hand) {
+        printCard(card);
+    }
+    cout << "(" << calculateHandValue(hand) << " points)" << endl;
+}
+
+bool playBlackjack() {
+    vector<Card> deck = createDeck();
+    shuffleDeck(deck);
+
+    vector<Card> playerHand;
+    vector<Card> dealerHand;
+
+    playerHand.push_back(deck.back());
+    deck.pop_back();
+    dealerHand.push_back(deck.back());
+    deck.pop_back();
+    playerHand.push_back(deck.back());
+    deck.pop_back();
+    dealerHand.push_back(deck.back());
+    deck.pop_back();
+
+    cout << "Dealer's hand: ";
+    printCard(dealerHand[0]);
+    cout << "??" << endl;
+
+    cout << "Your hand: ";
+    printHand(playerHand);
+
+    char action;
+    while (true) {
+        cout << "Do you want to (h)it or (s)tand? ";
+        cin >> action;
+
+        if (action == 'h') {
+            playerHand.push_back(deck.back());
+            deck.pop_back();
+            cout << "Your hand: ";
+            printHand(playerHand);
+
+            if (calculateHandValue(playerHand) > 21) {
+                cout << "YOU BUSTED! DEALER WINS." << endl;
+                return false;
+            }
+        } else if (action == 's') {
+            break;
+        } else {
+            cout << "Invalid action. Please enter 'h' or 's'." << endl;
+        }
+    }
+
+    cout << "Dealer's hand: ";
+    printHand(dealerHand);
+
+    while (calculateHandValue(dealerHand) < 17) {
+        dealerHand.push_back(deck.back());
+        deck.pop_back();
+        cout << "Dealer's hand: ";
+        printHand(dealerHand);
+    }
+
+    int playerValue = calculateHandValue(playerHand);
+    int dealerValue = calculateHandValue(dealerHand);
+
+    if (dealerValue > 21 || playerValue > dealerValue) {
+        cout << "YOU WIN!" << endl;
+    } else if (playerValue < dealerValue) {
+        cout << "DEALER WINS." << endl;
+    } else {
+        cout << "IT'S A TIE!" << endl;
+    }
+
+    return true;
+}
+
+int main() {
+    char playAgain;
+    do {
+        bool gameResult = playBlackjack();
+        cout << "Do you want to play again? (y/n): ";
+        cin >> playAgain;
+    } while (playAgain == 'y');
+    cout << "Thanks for playing!" << endl;
+    return 0;
+}
+
