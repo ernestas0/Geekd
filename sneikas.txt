@@ -1,0 +1,151 @@
+#include <windows.h>
+#include <iostream>
+#include <conio.h>
+using namespace std;
+bool PPralaimejai;
+const int width = 20;
+const int height = 20;
+int x, y, maistasX, maistasY, scorras;
+int uodegaX[100], uodegaY[100];
+int tail;
+enum eDirection { STOP = 0, LEFT, RIGHT, UP, DOWN};
+eDirection  dir;
+void Setup()
+{
+    PPralaimejai = false;
+    dir = STOP;
+    x = width  / 2;
+    y = height / 2;
+    maistasX = rand() % width;
+    maistasY = rand() % height;
+    scorras = 0;
+}
+void Draw()
+{
+    system("cls");
+    for (int i = 0; i < width+2; i++)
+        cout  << "#";
+    cout << endl;
+
+    for (int i = 0; i < height; i++)
+    {
+        for (int j = 0; j < width; j++)
+        {
+            if (j == 0)
+                cout << "#";
+            if (i == y && j ==x)
+            cout << "O";
+        else if (i == maistasY && j == maistasX)
+            cout << "F";
+        else
+        {
+            bool print = false;
+            for (int k = 0; k < tail; k++)
+            {
+
+                if(uodegaX[k] == j && uodegaY[k] == i)
+                {
+                    cout << "o";
+                    print  = true;
+                }
+            }
+            if (!print)
+            cout << " ";
+        }
+
+            if (j == width - 1)
+                cout << "#";
+        }
+            cout << endl;
+    }
+
+    for (int i = 0; i < width+2; i++)
+        cout  << "#";
+    cout << endl;
+    cout << "scorras:" << scorras << endl;
+}
+void Input()
+{
+  if (_kbhit())
+  {
+      switch (_getch())
+      {
+      case 'a':
+        dir = LEFT;
+        break;
+
+     case 'd':
+        dir = RIGHT;
+        break;
+
+         case 'w':
+        dir = UP;
+        break;
+
+        case 's':
+        dir = DOWN;
+        break;
+      case 'x':
+        PPralaimejai = true;
+        break;
+      }
+  }
+}
+void Logic()
+{
+    int prevX = uodegaX[0];
+    int prevY = uodegaY[0];
+    int prev2X, prev2Y;
+    uodegaX[0] = x;
+    uodegaY[0] = y;
+    for(int i = 1; i < tail; i++)
+    {
+        prev2X = uodegaX[i];
+        prev2Y = uodegaY[i];
+        uodegaX[i] = prevX;
+        uodegaY[i] = prevY;
+        prevX = prev2X;
+        prevY = prev2Y;
+    }
+    switch(dir)
+    {
+    case LEFT:
+        x --;
+        break;
+    case RIGHT:
+        x ++;
+        break;
+    case UP:
+        y --;
+        break;
+    case DOWN:
+        y ++;
+        break;
+    default:
+        break;
+    }
+    if (x > width || x < 0 || y > height || y < 0)
+        PPralaimejai = true;
+    if (x == maistasX && y == maistasY)
+    {
+
+        scorras +=10;
+        maistasX = rand() % width;
+        maistasY = rand() % height;
+        tail++;
+    }
+}
+
+int main()
+{
+     Setup();
+     while (!PPralaimejai)
+    {
+        Draw();
+        Input();
+        Logic();
+        Sleep(85);
+
+    }
+    return 0;
+}
