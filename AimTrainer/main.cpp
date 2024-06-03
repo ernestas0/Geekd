@@ -88,10 +88,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hwnd, &ps);
 
-            // Draw background
+            // Piesia backgrounda
             DrawBackground(hdc);
 
-            // Draw target(s)
+            // Nupiesia priesus
             if (gameState == STATIC && targetsShot < MAX_TARGETS) {
                 DrawTarget(hdc, targetX, targetY);
             } else if (gameState == STRAFE) {
@@ -100,7 +100,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
                 }
             }
 
-            // Draw score and timer
+            // Taskai ir taimeris
             WCHAR scoreText[50];
             wsprintfW(scoreText, L"Score: %d", score);
             TextOutW(hdc, 10, 10, scoreText, lstrlenW(scoreText));
@@ -213,11 +213,11 @@ void ResetGame() {
 void DrawBackground(HDC hdc) {
     RECT rect;
     GetClientRect(GetForegroundWindow(), &rect);
-    HBRUSH backgroundBrush = CreateSolidBrush(RGB(240, 240, 240)); // Light grey background
+    HBRUSH backgroundBrush = CreateSolidBrush(RGB(240, 240, 240));
     FillRect(hdc, &rect, backgroundBrush);
     DeleteObject(backgroundBrush);
 
-    // Draw math notebook-like lines
+    // backgroundo piesimas - liniju
     HPEN pen = CreatePen(PS_SOLID, 1, RGB(200, 200, 200));
     HPEN oldPen = (HPEN)SelectObject(hdc, pen);
     for (int y = 0; y < rect.bottom; y += 20) {
@@ -264,7 +264,7 @@ void UpdateStrafeTargets() {
                 strafeDirection[i] = TRUE;
             }
         }
-        // Vertical movement for the second target
+        
         if (i == 1) {
             if (strafeDirection[i]) {
                 strafeTargetY[i] += 2;
