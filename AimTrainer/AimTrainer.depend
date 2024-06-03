@@ -1,0 +1,7 @@
+# depslib dependency file v1.0
+1717446256 source:c:\users\gaika\documents\hokeowkr\aimtrainer\main.cpp
+	<windows.h>
+	<stdlib.h>
+	<time.h>
+	<string>
+
