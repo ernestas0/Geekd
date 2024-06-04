@@ -1,0 +1,144 @@
+#include <windows.h>
+
+const int WINDOW_WIDTH = 800;
+const int WINDOW_HEIGHT = 600;
+const int GROUND_LEVEL = 500;
+const int DINO_SIZE = 50;
+const int JUMP_HEIGHT = 150;
+const int OBSTACLE_WIDTH = 20;
+const int OBSTACLE_HEIGHT = 50;
+const int OBSTACLE_SPEED = 5;
+
+bool isJumping = false;
+bool isFalling = false;
+bool gameOver = false;
+int dinoY = GROUND_LEVEL - DINO_SIZE;
+int obstacleX = WINDOW_WIDTH;
+
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+void Update() {
+    if (!gameOver) {
+        if (isJumping) {
+            if (dinoY > GROUND_LEVEL - DINO_SIZE - JUMP_HEIGHT && !isFalling) {
+                dinoY -= 10;
+            } else {
+                isFalling = true;
+            }
+            if (isFalling) {
+                dinoY += 10;
+                if (dinoY >= GROUND_LEVEL - DINO_SIZE) {
+                    dinoY = GROUND_LEVEL - DINO_SIZE;
+                    isJumping = false;
+                    isFalling = false;
+                }
+            }
+        }
+
+        obstacleX -= OBSTACLE_SPEED;
+        if (obstacleX < -OBSTACLE_WIDTH) {
+            obstacleX = WINDOW_WIDTH;
+        }
+
+        // Check for collision
+        if (obstacleX < 150 && obstacleX + OBSTACLE_WIDTH > 100 && dinoY + DINO_SIZE > GROUND_LEVEL - OBSTACLE_HEIGHT) {
+            gameOver = true;
+        }
+    }
+}
+
+void Draw(HDC hdc) {
+    // Clear screen
+    RECT rect;
+    GetClientRect(WindowFromDC(hdc), &rect);
+    FillRect(hdc, &rect, (HBRUSH)(COLOR_WINDOW + 1));
+
+    // Draw ground
+    MoveToEx(hdc, 0, GROUND_LEVEL, NULL);
+    LineTo(hdc, WINDOW_WIDTH, GROUND_LEVEL);
+
+    if (gameOver) {
+        // Draw Game Over text
+        const wchar_t* gameOverText = L"Game Over";
+        SetTextAlign(hdc, TA_CENTER);
+        TextOutW(hdc, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, gameOverText, lstrlenW(gameOverText));
+    } else {
+        // Draw dino
+        Rectangle(hdc, 100, dinoY, 100 + DINO_SIZE, dinoY + DINO_SIZE);
+
+        // Draw obstacle
+        Rectangle(hdc, obstacleX, GROUND_LEVEL - OBSTACLE_HEIGHT, obstacleX + OBSTACLE_WIDTH, GROUND_LEVEL);
+    }
+}
+
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int nCmdShow) {
+    const wchar_t CLASS_NAME[] = L"DinoRunClass";
+
+    WNDCLASSW wc = {};
+    wc.lpfnWndProc = WindowProc;
+    wc.hInstance = hInstance;
+    wc.lpszClassName = CLASS_NAME;
+    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+
+    RegisterClassW(&wc);
+
+    HWND hwnd = CreateWindowExW(
+        0,
+        CLASS_NAME,
+        L"Dino Run",
+        WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT, CW_USEDEFAULT, WINDOW_WIDTH, WINDOW_HEIGHT,
+        NULL,
+        NULL,
+        hInstance,
+        NULL
+    );
+
+    if (hwnd == NULL) {
+        return 0;
+    }
+
+    ShowWindow(hwnd, nCmdShow);
+
+    MSG msg = {};
+    while (msg.message != WM_QUIT) {
+        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+
+        Update();
+
+        HDC hdc = GetDC(hwnd);
+        Draw(hdc);
+        ReleaseDC(hwnd, hdc);
+
+        Sleep(30);
+    }
+
+    return 0;
+}
+
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+    switch (uMsg) {
+        case WM_DESTROY:
+            PostQuitMessage(0);
+            return 0;
+
+        case WM_KEYDOWN:
+            if (wParam == VK_SPACE && !isJumping && !gameOver) {
+                isJumping = true;
+            }
+            return 0;
+
+        case WM_PAINT: {
+            PAINTSTRUCT ps;
+            HDC hdc = BeginPaint(hwnd, &ps);
+            Draw(hdc);
+            EndPaint(hwnd, &ps);
+        }
+        return 0;
+    }
+
+    return DefWindowProc(hwnd, uMsg, wParam, lParam);
+}
